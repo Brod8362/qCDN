@@ -1,0 +1,151 @@
+openapi: 3.0.0
+info:
+  title: qCDN
+  description: Miniature file upload service/CDN
+  contact:
+    name: Brod8362
+    url: http://www.github.com/Brod8362
+  version: 0.1.0
+
+servers:
+  - url: https://cdn.byakuren.pw
+    description: Primary public server
+  - url: http://127.0.0.1:5000
+    description: Local development flask server
+
+components:
+  schemas:
+    FileInformation:
+      type: object
+      properties:
+        id:
+          description: Unique ID of the file
+          type: string
+        mimetype:
+          description: Mimetype of the file
+          type: string
+        size:
+          description: Size (in bytes) of the file
+          type: number
+        name:
+          description: Name of the file
+          type: string
+        checksum:
+          description: SHA256 checksum of the file
+          type: string
+        download_url:
+          description: Download URL of the file
+          type: string
+
+    FileUploadParameters:
+      type: object
+      properties:
+        file:
+          description: The file itself (bytes)
+          type: string
+        expire_time:
+          description: ISO 8601 of the time when the file should expire. If not specified, file will not expire
+          type: string
+      required:
+        - file
+
+    ErrorResponse:
+      type: object
+      properties:
+        error_str:
+          description: Description of the error that occured
+
+paths:
+  /upload:
+    post:
+      description: Upload a file to the CDN
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/FileUploadParameters"
+
+      responses:
+        201:
+          description: File uploaded successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileInformation"
+        400:
+          description: Invalid or non-permitted argument(s) (see response body for details)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        403:
+          description: Not authorized to upload
+    get:
+      description: Get an HTML page with a simple upload interface
+      responses:
+        200:
+          description: The simple upload page
+        403:
+          description: Not authorized to upload
+
+  /{id}:
+    get:
+      description: Get information about a file
+      responses:
+        200:
+          description: File information found successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileInformation"
+        404:
+          description: File with given ID not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      description: Delete a file
+      responses:
+        200:
+          description: File deleted successfully.
+        400:
+          description: Missing modification token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        403:
+          description: Incorrect modification token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        404:
+          description: File with ID not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"          
+
+  /download/{id}:
+    get:
+      description: Download a file
+      responses:
+        200:
+          description: File found and will be transferred.
+        404:
+          description: File with given ID not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /stats:
+    get:
+      description: Statistics about files being served
+      responses:
+        200:
+          description: Statistics in response body
+        403:
+          description: Not authorized to view statistics
