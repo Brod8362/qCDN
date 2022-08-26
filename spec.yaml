@@ -33,6 +33,12 @@ components:
         checksum:
           description: SHA256 checksum of the file
           type: string
+        upload_time:
+          description: ISO 8601 timestamp that the file was uploaded at
+          type: string
+        expire_time:
+          description: ISO 8601 timestamp that the file will expire on
+          type: string
         download_url:
           description: Download URL of the file
           type: string
