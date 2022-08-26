@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<head>
+    <title>qCDN: Download {{file.name}}</title>
+</head>
+
+<body>
+    <table>
+        <tr>
+            <th>Name</th>
+            <td>{{file.name}}</td>
+        </tr>
+        <td>
+            <th>ID</th>
+            <td>{{file.id}}</td>
+        </td>
+        <tr>
+            <th>Size</th>
+            <td>{{file.size}}</td>
+        </tr>
+        <tr>
+            <th>Mimetype</th>
+            <td>{{file.mimetype}}</td>
+        </tr>
+        <tr>
+            <th>SHA256</th>
+            <td>{{file.checksum}}</td>
+        </tr>
+        <tr>
+            <th>Download</th>
+            <td><a href="{{download_url}}">Link</a></td>
+        </tr>
+    </table>
+</body>
