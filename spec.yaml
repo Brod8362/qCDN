@@ -94,7 +94,7 @@ paths:
         403:
           description: Not authorized to upload
 
-  /{id}:
+  /file/{id}:
     get:
       description: Get information about a file
       responses:
@@ -141,7 +141,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"          
 
-  /download/{id}:
+  /file/{id}/download:
     get:
       description: Download a file
       responses:
