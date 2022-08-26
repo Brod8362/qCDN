@@ -112,6 +112,13 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
     delete:
       description: Delete a file
+      requestBody:
+        content:
+          text/plain:
+            schema:
+              type: string
+              description: Modifier token for this file object
+
       responses:
         200:
           description: File deleted successfully.
