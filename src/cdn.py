@@ -1,16 +1,23 @@
-from flask import Flask, request
+from flask import Flask, request, send_file
+
+from error import error_response
 
 app = Flask(__name__)
 
 
 @app.get("/upload")
 def get_upload_page():
-    return "not implemented", 501
+    return send_file("static/upload_page.html"), 200
 
 
 @app.post("/upload")
 def handle_file_upload():
-    return "not implemented", 501
+    if request.mimetype != "multipart/form-data":
+        return error_response("request mimetype invalid")
+    if (file_count := len(request.files)) != 1:
+        return error_response(f"received {file_count} files, expected 1")
+
+    return "ok", 200
 
 
 @app.get("/file/<id>")
