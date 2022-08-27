@@ -1,8 +1,11 @@
+import datetime
 import sqlite3
+from typing import Optional
+
 from fileinfo import FileInformation
+from datetime import datetime
 
 DEFAULT_PATH = "qcdn.db"
-
 
 class CDNDatabase:
     conn: sqlite3.Connection = None
@@ -26,7 +29,32 @@ class CDNDatabase:
                      info.modify_token,
                      info.uploader)
                     )
+        self.conn.commit()
         cur.close()
+
+    def get_file_info(self, file_id: str) -> Optional[FileInformation]:
+        cur = self.conn.cursor()
+        rs = [row for row in cur.execute(
+            """SELECT mimetype, name, size, checksum, 
+                upload_time, expire_time, modify_token, uploader
+                FROM file_info WHERE id=?""",
+            (file_id,)
+        )]
+        if len(rs) == 0:
+            return None
+        else:
+            row = rs[0]
+            return FileInformation(
+                id=file_id,
+                mimetype=row[0],
+                name=row[1],
+                size=row[2],
+                checksum=row[3],
+                upload_time=datetime.fromisoformat(row[4]),
+                expire_time=datetime.fromisoformat(et) if (et := row[5]) is not None else None,
+                modify_token=row[6],
+                uploader=row[7]
+            )
 
 
 def init_db(path: str = DEFAULT_PATH):
@@ -44,4 +72,5 @@ def init_db(path: str = DEFAULT_PATH):
                     modify_token TEXT,
                     uploader TEXT
                 )""")
+    conn.commit()
     cur.close()
