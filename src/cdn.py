@@ -17,7 +17,7 @@ from util import format_file_size
 # Constants
 FILES_STORE_PATH = os.path.abspath("./files/")
 DB_NAME = "qcdn.db"
-MAX_FILE_SIZE = 100 * 1024 * 1024  # 100 MB
+MAX_FILE_SIZE = 1024 * 1024 * 1024  # 1 GB
 
 # Create flask app
 app = Flask(__name__, template_folder="static")
@@ -53,8 +53,11 @@ def auto_auth(force_auth=False):
 # noinspection PyUnresolvedReferences
 @app.get("/upload")
 @auto_auth(force_auth=True)
-def get_upload_page(_):
-    return render_template("upload_page.html", max_file_size=MAX_FILE_SIZE), 200
+def get_upload_page(user: User):
+    db_conn = get_database()
+    remaining = -1 if user.quota == -1 else user.quota - user.quota_used(db_conn)
+    user_max = MAX_FILE_SIZE if user.size_limit == -1 else min(MAX_FILE_SIZE, user.size_limit)
+    return render_template("upload_page.html", max_file_size=user_max, remaining_quota=remaining), 200
 
 
 @app.post("/upload")

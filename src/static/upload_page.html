@@ -1,28 +1,79 @@
 <!DOCTYPE html>
 <head>
     <title>qCDN: Upload file...</title>
+    <script>
+        const MAX_SIZE = {{ max_file_size }};
+        const REMAINING_QUOTA = {{ remaining_quota }};
+    </script>
 </head>
 
 <body>
-    <h1>Upload file to CDN</h1>
-    <pre id="file_info">-</pre>
-    <form action="/upload" method="post" enctype="multipart/form-data">
-        <input type="file" name="file" id="file_field">
-        <input type="submit" id="upload_button" value="upload" disabled="true">
-    </form>
-
     <script>
-        const MAX_SIZE = {{ max_file_size }};
-        document.getElementById("file_field").onchange = function(event) {
-            const file = event.target.files[0];
-            document.getElementById("file_info").innerHTML = 
+        function on_file_select() {
+            const file = document.getElementById("file_input").files[0];
+            document.getElementById("file_info").innerHTML =
                 `Size: ${file.size}\nName: ${file.name}\nMimetype: ${file.type}`;
+            let warning_elem = document.getElementById("warning");
             if (file.size > MAX_SIZE) {
-                alert("File too large.")
                 document.getElementById("upload_button").disabled = true;
+                warning_elem.innerHTML ="File exceeds maximum file size.";
             } else {
-                document.getElementById("upload_button").disabled = false;
+                if (REMAINING_QUOTA !== -1 && file.size > REMAINING_QUOTA) {
+                    warning_elem.innerHTML ="File exceeds remaining quota.";
+                    document.getElementById("upload_button").disabled = true;
+                } else {
+                    document.getElementById("upload_button").disabled = false;
+                    warning_elem.innerHTML = "";
+                }
             }
         }
+
+        function do_upload() {
+            let data = new FormData();
+            data.append("file", document.querySelector("#file_input").files[0]);
+            let elem_container = document.querySelector("#upload_complete_div");
+            elem_container.setAttribute("hidden", "");
+
+            let request = new XMLHttpRequest();
+            request.open("POST", "/upload");
+
+            request.upload.addEventListener("progress", function (e) {
+                let bar = document.querySelector("#progress_bar");
+                let label = document.querySelector("#progress_label");
+                bar.value = e.loaded;
+                bar.max = e.total;
+                label.innerHTML = `${Math.floor((e.loaded)/(e.total)*100)}%`;
+            });
+
+            request.addEventListener('load', function(e) {
+               if (request.status === 201) {
+                   let url = JSON.parse(request.response)["file_info"]["download_url"];
+                   let elem_container = document.querySelector("#upload_complete_div")
+                   elem_container.removeAttribute("hidden");
+                   let a_tag = document.querySelector("#final_upload");
+                   a_tag.innerHTML = url
+                   a_tag.setAttribute("href", url);
+               } else {
+                   alert(`Upload Failed: ${request.status}`);
+               }
+            });
+
+            request.send(data);
+        }
     </script>
+
+    <a href="/user">User page...</a>
+    <hr>
+    <h1>Upload file to CDN</h1>
+    <pre id="file_info">-</pre>
+    <p style="color:red" id="warning"></p>
+    <br>
+    <input type="file" id="file_input" onchange="on_file_select()">
+    <br>
+    <button onclick="do_upload()" id="upload_button">Upload!</button>
+    <label for="progress_bar" id="progress_label"></label>
+    <progress value="0" max="100" id="progress_bar"></progress>
+    <div id="upload_complete_div" hidden="">
+        <p>Upload complete! It is now available at </p> <a href="" id="final_upload"></a>
+    </div>
 </body>
