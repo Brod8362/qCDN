@@ -81,7 +81,7 @@ def handle_file_upload():
 
     # return it
     resp = {
-        "file_info": file_info.to_dict(),
+        "file_info": file_info.to_dict(base_url=request.host_url),
         "modify_token": file_info.modify_token,
     }
     return resp, 201
@@ -125,7 +125,6 @@ def download_file(id: str):
         return error_response("file not found"), 404
 
     if file_info.is_expired():
-        # TODO: add 410 to API spec
         return error_response("download expired"), 410
 
     return send_file(os.path.join(FILES_STORE_PATH, file_info.id), download_name=file_info.name)
