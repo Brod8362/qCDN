@@ -1,0 +1,30 @@
+<head>
+    <title>qCDN stats</title>
+</head>
+<body>
+    <h1>File Stats</h1>
+    <ul>
+        <li>Total Files: {{ stats['total_files'] }}</li>
+        <li>Total Size: {{ stats['total_size']}}</li>
+        <li>Largest File: {{ stats['largest_file']}}</li>
+    </ul>
+    <table>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Size</th>
+            <th>Uploader</th>
+            <th>Download</th>
+        </tr>
+        {%- for f in files %}
+            <tr>
+                <td>{{f.id}}</td>
+                <td>{{f.name}}</td>
+                <td>{{f.size}}</td>
+                <th>{{f.uploader}}</th>
+                <td><a href={{f.download_url()}}>Download</a></td>
+            </tr>
+        {% endfor %}
+    </table>
+
+</body>

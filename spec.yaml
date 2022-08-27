@@ -84,14 +84,10 @@ paths:
                   modify_token:
                     type: string
                     description: Token used to later delete file if desired.
-        400:
-          description: Invalid or non-permitted argument(s) (see response body for details)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
         403:
           description: Not authorized to upload
+        413:
+          description: File is larger than specified max file size.
     get:
       description: Get an HTML page with a simple upload interface
       responses:

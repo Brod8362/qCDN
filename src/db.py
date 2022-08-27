@@ -1,6 +1,6 @@
 import datetime
 import sqlite3
-from typing import Optional
+from typing import Optional, List
 
 from fileinfo import FileInformation
 from datetime import datetime
@@ -36,7 +36,7 @@ class CDNDatabase:
     def get_file_info(self, file_id: str) -> Optional[FileInformation]:
         cur = self.conn.cursor()
         rs = [row for row in cur.execute(
-            """SELECT mimetype, name, size, checksum, 
+            """SELECT id, mimetype, name, size, checksum, 
                 upload_time, expire_time, modify_token, uploader
                 FROM file_info WHERE id=?""",
             (file_id,)
@@ -44,18 +44,29 @@ class CDNDatabase:
         if len(rs) == 0:
             return None
         else:
-            row = rs[0]
-            return FileInformation(
-                id=file_id,
-                mimetype=row[0],
-                name=row[1],
-                size=row[2],
-                checksum=row[3],
-                upload_time=datetime.fromisoformat(row[4]),
-                expire_time=datetime.fromisoformat(et) if (et := row[5]) is not None else None,
-                modify_token=row[6],
-                uploader=row[7]
-            )
+            return row_to_obj(rs[0])
+
+    def get_all_file_info(self) -> List[FileInformation]:
+        cur = self.conn.cursor()
+        rs_iter = cur.execute(
+            """SELECT id, mimetype, name, size, checksum, 
+                upload_time, expire_time, modify_token, uploader
+                FROM file_info""")
+        return [row_to_obj(row) for row in rs_iter]
+
+
+def row_to_obj(row: tuple) -> FileInformation:
+    return FileInformation(
+        id=row[0],
+        mimetype=row[1],
+        name=row[2],
+        size=row[3],
+        checksum=row[4],
+        upload_time=datetime.fromisoformat(row[5]),
+        expire_time=datetime.fromisoformat(et) if (et := row[6]) is not None else None,
+        modify_token=row[7],
+        uploader=row[8]
+    )
 
 
 def init_db(path: str = DEFAULT_PATH):

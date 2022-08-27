@@ -40,7 +40,6 @@ def handle_file_upload():
     if (file_count := len(request.files)) != 1:
         return error_response(f"received {file_count} files, expected 1")
 
-    # TODO: try and parse expiry time
     if "expire_time" in request.form:
         try:
             expires = datetime.fromisoformat(request.form["expire_time"])
@@ -130,6 +129,14 @@ def download_file(id: str):
     return send_file(os.path.join(FILES_STORE_PATH, file_info.id), download_name=file_info.name)
 
 
+# noinspection PyUnresolvedReferences
 @app.get("/stats")
 def retrieve_stats():
-    return "not implemented", 501
+    db_conn = get_database()
+    files = db_conn.get_all_file_info()
+    stats = {
+        "total_files": len(files),
+        "total_size": sum(f.size for f in files),
+        "largest_file": max(f.size for f in files)
+    }
+    return render_template("stats_page.html", stats=stats, files=files), 200
