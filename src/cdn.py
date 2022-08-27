@@ -197,6 +197,8 @@ def user_page(user):
 
 @app.post("/wizard")
 def create_user():
+    if request.remote_addr != "127.0.0.1":
+        return error_response("unauthorized", 401)
     req = ["user", "quota", "file_size_limit"]
     for x in req:
         if x not in request.form:

@@ -20,7 +20,16 @@
         }
     </script>
     {% if user %}
+        {% if user.admin %}
+        <h3 style="color:red">Hi, {{ user.name }}</h3>
+        <hr>
+        <b>Admin Panel</b>
+        <a href="/stats">Stats...</a>
+        <a href="/wizard">New User...</a>
+        <hr>
+        {% else %}
         <h3>Hi, {{ user.name }}</h3>
+        {% endif %}
         <ul>
             <li><b>Quota:</b> {{info["quota_used"]}} / {{info["quota"]}}</li>
             <li><b>Single-file size limit:</b> {{info["size_limit"]}}</li>
