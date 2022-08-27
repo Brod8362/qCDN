@@ -1,5 +1,10 @@
 <head>
     <title>qCDN: Register</title>
+    <style>
+        table, th, td {
+            border: 1px solid black;
+        }
+    </style>
 </head>
 <body>
     <script>
@@ -22,6 +27,29 @@
             <li><b>Uploads:</b> {{info["upload_count"]}}</li>
         </ul>
         <button onclick="logout()">Logout</button>
+        <h3> Your files </h3>
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Size</th>
+                <th>Download</th>
+                <th>Info</th>
+                <th>Delete</th>
+            </tr>
+            {%- for f in files %}
+            <tr>
+                <td>{{f.id}}</td>
+                <td>{{f.name}}</td>
+                <td>{{f.size_nice()}}</td>
+                <td><a href={{f.download_url()}}>Download</a></td>
+                <td><a href="/file/{{f.id}}">Info</a></td>
+                <td>
+                    <button onclick="delete_file(this.name)" name="{{f.id}}">Delete</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
     {% endif %}
     <hr>
     <label for="token_input">Token </label><input id="token_input" placeholder="put token here..." type="password">
