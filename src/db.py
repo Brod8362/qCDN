@@ -20,7 +20,7 @@ class CDNDatabase:
 
     def save_file_info(self, info: FileInformation):
         cur = self.conn.cursor()
-        cur.execute("INSERT INTO file_info VALUES(?,?,?,?,?,?,?,?,?)",
+        cur.execute("INSERT INTO file_info VALUES(?,?,?,?,?,?,?,?,?,?)",
                     (info.id,
                      info.mimetype,
                      info.name,
@@ -29,7 +29,8 @@ class CDNDatabase:
                      info.upload_time,
                      info.expire_time,
                      info.modify_token,
-                     info.uploader)
+                     info.uploader,
+                     False)
                     )
         self.conn.commit()
         cur.close()
@@ -39,7 +40,7 @@ class CDNDatabase:
         rs = [row for row in cur.execute(
             """SELECT id, mimetype, name, size, checksum, 
                 upload_time, expire_time, modify_token, uploader
-                FROM file_info WHERE id=?""",
+                FROM file_info WHERE id=? AND deleted=FALSE""",
             (file_id,)
         )]
         if len(rs) == 0:
@@ -52,7 +53,7 @@ class CDNDatabase:
         rs_iter = cur.execute(
             """SELECT id, mimetype, name, size, checksum, 
                 upload_time, expire_time, modify_token, uploader
-                FROM file_info""")
+                FROM file_info WHERE deleted=FALSE""")
         return [row_to_obj(row) for row in rs_iter]
 
     def get_user_by_token(self, token: str) -> Optional[User]:
@@ -66,8 +67,14 @@ class CDNDatabase:
         rs_iter = cur.execute(
             """SELECT id, mimetype, name, size, checksum, 
                 upload_time, expire_time, modify_token, uploader
-                FROM file_info WHERE uploader=?""", (user_name,))
+                FROM file_info WHERE uploader=? AND deleted=FALSE""", (user_name,))
         return [row_to_obj(row) for row in rs_iter]
+
+    def mark_deleted(self, file_id: str):
+        cur = self.conn.cursor()
+        cur.execute("UPDATE file_info SET deleted=TRUE where id=?", (file_id,))
+        self.conn.commit()
+        cur.close()
 
 
 def row_to_obj(row: tuple) -> FileInformation:
@@ -97,7 +104,8 @@ def init_db(path: str = DEFAULT_PATH):
                     upload_time TIMESTAMP NOT NULL,
                     expire_time TIMESTAMP,
                     modify_token TEXT,
-                    uploader TEXT
+                    uploader TEXT,
+                    deleted BOOLEAN
                 )""")
     cur.execute("""CREATE TABLE IF NOT EXISTS users(
         token TEXT NOT NULL PRIMARY KEY,

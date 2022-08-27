@@ -5,36 +5,49 @@
             border: 1px solid black;
         }
     </style>
+    <script>
+        function delete_file(fid) {
+            fetch(`/file/${fid}`, {
+                method: "DELETE"
+            })
+                .then(x => alert("deleted"))
+                .then(x => location.reload());
+        }
+    </script>
 </head>
 <body>
-    <h1>File Stats</h1>
-    <ul>
-        <li>Total Files: {{ stats['total_files'] }}</li>
-        <li>Total Size: {{ stats['total_size']}}</li>
-        <li>Largest File: {{ stats['largest_file']}}</li>
-        <li>Configured Maximum: {{ stats['maximum_allowed']}}</li>
-    </ul>
-    <h3>All files (largest first)</h3>
-    <a href="/upload">Upload...</a>
-    <table>
-        <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Size</th>
-            <th>Uploader</th>
-            <th>Download</th>
-            <th>Info</th>
-        </tr>
-        {%- for f in files %}
-            <tr>
-                <td>{{f.id}}</td>
-                <td>{{f.name}}</td>
-                <td>{{f.size_nice()}}</td>
-                <th>{{f.uploader}}</th>
-                <td><a href={{f.download_url()}}>Download</a></td>
-                <td><a href="/file/{{f.id}}">Info</a></td>
-            </tr>
-        {% endfor %}
-    </table>
+<h1>File Stats</h1>
+<ul>
+    <li>Total Files: {{ stats['total_files'] }}</li>
+    <li>Total Size: {{ stats['total_size']}}</li>
+    <li>Largest File: {{ stats['largest_file']}}</li>
+    <li>Configured Maximum: {{ stats['maximum_allowed']}}</li>
+</ul>
+<h3>All files (largest first)</h3>
+<a href="/upload">Upload...</a>
+<table>
+    <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Size</th>
+        <th>Uploader</th>
+        <th>Download</th>
+        <th>Info</th>
+        <th>Delete</th>
+    </tr>
+    {%- for f in files %}
+    <tr>
+        <td>{{f.id}}</td>
+        <td>{{f.name}}</td>
+        <td>{{f.size_nice()}}</td>
+        <th>{{f.uploader}}</th>
+        <td><a href={{f.download_url()}}>Download</a></td>
+        <td><a href="/file/{{f.id}}">Info</a></td>
+        <td>
+            <button onclick="delete_file(this.name)" name="{{f.id}}">Delete</button>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
 
 </body>

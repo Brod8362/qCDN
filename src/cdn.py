@@ -21,7 +21,7 @@ MAX_FILE_SIZE = 100 * 1024 * 1024  # 100 MB
 # Create flask app
 app = Flask(__name__, template_folder="static")
 app.config["MAX_CONTENT_LENGTH"] = MAX_FILE_SIZE
-#TODO: review 401/403 usage throughout the API
+# TODO: review 401/403 usage throughout the API
 
 # Initialize database
 db.init_db()
@@ -40,7 +40,9 @@ def auto_auth(force_auth=False):
             if force_auth and user is None:
                 return error_response("auth required", code=401)
             return f(user, *args, **kwargs)
+
         return inner
+
     return decorator
 
 
@@ -81,7 +83,7 @@ def handle_file_upload(user: User):
     modify_token = str(uuid.uuid4())[:8]
     file_content = uploaded_file.stream.read()
 
-    if user.quota != -1 and user.quota_used(db_conn)+len(file_content) > user.quota:
+    if user.quota != -1 and user.quota_used(db_conn) + len(file_content) > user.quota:
         return error_response("quota exceeded", 403)
 
     if user.size_limit != -1 and len(file_content) > user.size_limit:
@@ -128,22 +130,21 @@ def get_file_info(id: str):
 
 
 @app.delete("/file/<id>")
-def delete_file(id: str):
-    # TODO: maybe make this a parameter?
-    if request.content_type != "text/plain":
-        return error_response("wrong content type (expected text/plain)", 400)
-
+@auto_auth(force_auth=True)
+def delete_file(user, id: str):
     db_conn = get_database()
     file_info = db_conn.get_file_info(id)
     if file_info is None:
         return error_response("file not found"), 404
 
-    token = request.stream.read()
-    if token != file_info.modify_token:
-        return error_response("incorrect token"), 403
-    else:
-        # TODO: delete the file
+    if user.admin or file_info.uploader == user.name:
+        file_path = os.path.join(FILES_STORE_PATH, file_info.id)
+        db_conn.mark_deleted(file_info.id)
+        os.remove(file_path)
+
         return "", 200
+    else:
+        return error_response("permission denied"), 401
 
 
 @app.get("/file/<id>/download")
