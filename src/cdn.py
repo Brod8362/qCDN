@@ -80,7 +80,6 @@ def handle_file_upload(user: User):
     except KeyError:
         return error_response(f"file not provided via 'file' parameter")
     file_id = str(uuid.uuid4())
-    modify_token = str(uuid.uuid4())[:8]
     file_content = uploaded_file.stream.read()
 
     if user.quota != -1 and user.quota_used(db_conn) + len(file_content) > user.quota:
@@ -98,7 +97,7 @@ def handle_file_upload(user: User):
         checksum=hashlib.sha256(file_content).hexdigest(),
         upload_time=datetime.now(),
         expire_time=expires,
-        modify_token=modify_token,
+        modify_token="",
         uploader=user.name,
         owner_id=user.id
     )
@@ -113,8 +112,7 @@ def handle_file_upload(user: User):
 
     # return it
     resp = {
-        "file_info": file_info.to_dict(base_url=request.host_url),
-        "modify_token": file_info.modify_token,
+        "file_info": file_info.to_dict(base_url=request.url_root),
     }
     return resp, 201
 
@@ -125,7 +123,7 @@ def get_file_info(id: str):
 
     file_info = db_conn.get_file_info(id)
     if file_info is not None:
-        return file_info.to_dict(), 200
+        return file_info.to_dict(base_url=request.url_root), 200
     else:
         return error_response("file not found"), 404
 
