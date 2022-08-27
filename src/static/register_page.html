@@ -17,8 +17,8 @@
     {% if user %}
         <h3>Hi, {{ user.name }}</h3>
         <ul>
-            <li><b>Quota:</b> {{user.quota_used_nice()}} / {{user.quota_nice()}}</li>
-            <li><b>Uploads:</b> {{user.upload_count()}}</li>
+            <li><b>Quota:</b> {{info["quota_used"]}} / {{info["quota"]}}</li>
+            <li><b>Uploads:</b> {{info["upload_count"]}}</li>
         </ul>
         <button onclick="logout()">Logout</button>
     {% else %}

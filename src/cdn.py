@@ -180,7 +180,13 @@ def retrieve_stats(user):
 @app.get("/user")
 @auto_auth()
 def user_page(user):
-    return render_template("register_page.html", user=user)
+    db_conn = get_database()
+    info = {}
+    if user:
+        info["quota_used"] = user.quota_used_nice(db_conn)
+        info["quota"] = user.quota_used(db_conn) if user.quota != -1 else "unlimited"
+        info["upload_count"] = user.upload_count(db_conn)
+    return render_template("register_page.html", user=user, info=info)
 
 #
 # END OF ENDPOINTS

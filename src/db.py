@@ -61,6 +61,14 @@ class CDNDatabase:
             return User(row[0], row[1], row[2])
         return None
 
+    def get_user_uploads(self, user_name: str) -> List[FileInformation]:
+        cur = self.conn.cursor()
+        rs_iter = cur.execute(
+            """SELECT id, mimetype, name, size, checksum, 
+                upload_time, expire_time, modify_token, uploader
+                FROM file_info WHERE uploader=?""", (user_name,))
+        return [row_to_obj(row) for row in rs_iter]
+
 
 def row_to_obj(row: tuple) -> FileInformation:
     return FileInformation(
