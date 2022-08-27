@@ -1,0 +1,14 @@
+<head>
+    <title>qCDN user creation wizard</title>
+</head>
+<body>
+    <form action="/wizard" method="post">
+        <label for="name">Username</label>
+        <input type="text" id="name" name="user">
+        <label for="quota">Quota (in bytes)</label>
+        <input type="text" id="quota" name="quota">
+        <label for="file_size_limit">File size limit (in bytes)</label>
+        <input type="text" id="file_size_limit" name="file_size_limit">
+        <input type="submit">
+    </form>
+</body>

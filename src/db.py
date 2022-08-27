@@ -76,6 +76,12 @@ class CDNDatabase:
         self.conn.commit()
         cur.close()
 
+    def create_user(self, name: str, id:str,  token: str, quota: int, limit: int):
+        cur = self.conn.cursor()
+        cur.execute("INSERT INTO users VALUES(?,?,?,?,?,FALSE)", (id, name, token, limit, quota))
+        self.conn.commit()
+        cur.close()
+
 
 def row_to_obj(row: tuple) -> FileInformation:
     return FileInformation(
@@ -108,8 +114,9 @@ def init_db(path: str = DEFAULT_PATH):
                     deleted BOOLEAN
                 )""")
     cur.execute("""CREATE TABLE IF NOT EXISTS users(
-        token TEXT NOT NULL PRIMARY KEY,
-        name TEXT,
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL UNIQUE,
+        token TEXT NOT NULL UNIQUE,
         file_size_limit INTEGER,
         quota INTEGER,
         admin BOOLEAN

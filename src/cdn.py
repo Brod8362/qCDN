@@ -1,6 +1,7 @@
 import hashlib
 import functools
 import os
+import secrets
 import uuid
 from datetime import datetime
 
@@ -21,7 +22,7 @@ MAX_FILE_SIZE = 100 * 1024 * 1024  # 100 MB
 # Create flask app
 app = Flask(__name__, template_folder="static")
 app.config["MAX_CONTENT_LENGTH"] = MAX_FILE_SIZE
-# TODO: review 401/403 usage throughout the API
+
 
 # Initialize database
 db.init_db()
@@ -144,7 +145,7 @@ def delete_file(user, id: str):
 
         return "", 200
     else:
-        return error_response("permission denied"), 401
+        return error_response("permission denied"), 403
 
 
 @app.get("/file/<id>/download")
@@ -192,6 +193,39 @@ def user_page(user):
         info["upload_count"] = user.upload_count(db_conn)
         info["size_limit"] = format_file_size(user.size_limit) if user.size_limit != -1 else "n/a"
     return render_template("register_page.html", user=user, info=info, files=files)
+
+
+@app.post("/wizard")
+def create_user():
+    req = ["user", "quota", "file_size_limit"]
+    for x in req:
+        if x not in request.form:
+            return error_response(f"missing {x} in form data", 400)
+    id = uuid.uuid4()
+    name = request.form["user"]
+    try:
+        quota_bytes = int(request.form["quota"])
+        file_size_limit_bytes = int(request.form["file_size_limit"])
+    except ValueError:
+        return error_response("cannot parse int", 400)
+    token = secrets.token_hex(nbytes=128)
+    db_conn = get_database()
+    db_conn.create_user(name, str(id), token, quota_bytes, file_size_limit_bytes)
+    return {
+        "user": {
+            "id": id,
+            "name": name,
+            "quota": quota_bytes,
+            "file_size_limit_bytes": file_size_limit_bytes
+        },
+        "token": token,
+    }, 201
+
+@app.get("/wizard")
+def user_creation_wizard():
+    if request.remote_addr != "127.0.0.1":
+        return error_response("unauthorized", 401)
+    return render_template("user_wizard.html")
 
 #
 # END OF ENDPOINTS

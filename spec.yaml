@@ -15,6 +15,21 @@ servers:
 
 components:
   schemas:
+    User:
+      type: object
+      properties:
+        id:
+          description: User's ID
+          type: string
+        name:
+          description: User's name
+          type: string
+        quota:
+          description: User's maximum allowed disk usage
+          type: number
+        file_size_limit:
+          description: User's maximum file size limit
+          type: number
     FileInformation:
       type: object
       properties:
@@ -87,7 +102,7 @@ paths:
         403:
           description: Not authorized to upload
         413:
-          description: File is larger than specified max file size.
+          description: File is larger than specified max file size, or quota exceeded
     get:
       description: Get an HTML page with a simple upload interface
       responses:
@@ -170,3 +185,44 @@ paths:
           description: Statistics in response body
         403:
           description: Not authorized to view statistics
+
+  /user:
+    get:
+      description: User login and status page
+      responses:
+        200:
+          description: Page included in response body
+
+  /wizard:
+    get:
+      description: User creation wizard
+      responses:
+        200:
+          description: Page included in response body
+        403:
+          description: You are not allowed to create users
+    post:
+      description: Create a user
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                user:
+                  $ref: "#/components/schemas/User"
+      responses:
+        201:
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: "#/components/schemas/User"
+                  token:
+                    type: string
+                    description: User's login token
+        403:
+          description: You are not allowed to create users
