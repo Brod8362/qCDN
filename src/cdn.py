@@ -1,4 +1,5 @@
 import hashlib
+import functools
 import os
 import uuid
 from datetime import datetime
@@ -9,6 +10,7 @@ from flask import Flask, request, send_file, render_template
 import db
 from error import error_response
 from fileinfo import FileInformation
+from user import User
 from util import format_file_size
 
 # Constants
@@ -19,6 +21,7 @@ MAX_FILE_SIZE = 100 * 1024 * 1024  # 100 MB
 # Create flask app
 app = Flask(__name__, template_folder="static")
 app.config["MAX_CONTENT_LENGTH"] = MAX_FILE_SIZE
+#TODO: review 401/403 usage throughout the API
 
 # Initialize database
 db.init_db()
@@ -28,14 +31,33 @@ def get_database() -> db.CDNDatabase:
     return db.CDNDatabase(DB_NAME)
 
 
+def auto_auth(force_auth=False):
+    def decorator(f):
+        @functools.wraps(f)
+        def inner(*args, **kwargs):
+            db_conn = get_database()
+            user = db_conn.get_user_by_token(request.cookies.get("token", ""))
+            if force_auth and user is None:
+                return error_response("auth required", code=401)
+            return f(user, *args, **kwargs)
+        return inner
+    return decorator
+
+
+#
+# ALL ENDPOINTS START HERE
+#
+
 # noinspection PyUnresolvedReferences
 @app.get("/upload")
-def get_upload_page():
+@auto_auth(force_auth=True)
+def get_upload_page(_):
     return render_template("upload_page.html", max_file_size=MAX_FILE_SIZE), 200
 
 
 @app.post("/upload")
-def handle_file_upload():
+@auto_auth(force_auth=True)
+def handle_file_upload(user: User):
     if request.mimetype != "multipart/form-data":
         return error_response("request mimetype invalid")
     if (file_count := len(request.files)) != 1:
@@ -57,6 +79,12 @@ def handle_file_upload():
     modify_token = str(uuid.uuid4())[:8]
     file_content = uploaded_file.stream.read()
 
+    if user.quota != -1 and user.quota_used()+len(file_content) > user.quota:
+        return error_response("quota exceeded", 403)
+
+    if user.size_limit != -1 and len(file_content) > user.size_limit:
+        return error_response("file exceeds user size limit", 413)
+
     # construct FileInformation object
     file_info = FileInformation(
         id=file_id,
@@ -67,7 +95,7 @@ def handle_file_upload():
         upload_time=datetime.now(),
         expire_time=expires,
         modify_token=modify_token,
-        uploader=request.remote_addr
+        uploader=user.name if user is not None else request.remote_addr
     )
 
     # insert metadata into database
@@ -132,7 +160,10 @@ def download_file(id: str):
 
 # noinspection PyUnresolvedReferences
 @app.get("/stats")
-def retrieve_stats():
+@auto_auth(force_auth=True)
+def retrieve_stats(user):
+    if user.quota != -1 or user.size_limit != -1:
+        return error_response("unauthorized"), 403
     db_conn = get_database()
     files = db_conn.get_all_file_info()
     stats = {
@@ -147,9 +178,10 @@ def retrieve_stats():
 
 # noinspection PyUnresolvedReferences
 @app.get("/user")
-def user_page():
-    token = request.cookies.get("token", "")
-    db_conn = get_database()
-    user = db_conn.get_user_by_token(token)
+@auto_auth()
+def user_page(user):
     return render_template("register_page.html", user=user)
 
+#
+# END OF ENDPOINTS
+#
