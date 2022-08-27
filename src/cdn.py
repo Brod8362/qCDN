@@ -23,7 +23,6 @@ MAX_FILE_SIZE = 100 * 1024 * 1024  # 100 MB
 app = Flask(__name__, template_folder="static")
 app.config["MAX_CONTENT_LENGTH"] = MAX_FILE_SIZE
 
-
 # Initialize database
 db.init_db()
 
@@ -215,15 +214,17 @@ def create_user():
     db_conn = get_database()
     db_conn.create_user(name, str(id), token, quota_bytes, file_size_limit_bytes)
     return {
-        "user": {
-            "id": id,
-            "name": name,
-            "quota": quota_bytes,
-            "file_size_limit_bytes": file_size_limit_bytes
-        },
-        "token": token,
-    }, 201
+               "user": {
+                   "id": id,
+                   "name": name,
+                   "quota": quota_bytes,
+                   "file_size_limit_bytes": file_size_limit_bytes
+               },
+               "token": token,
+           }, 201
 
+
+# noinspection PyUnresolvedReferences
 @app.get("/wizard")
 def user_creation_wizard():
     if request.remote_addr != "127.0.0.1":

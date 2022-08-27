@@ -1,4 +1,3 @@
-import functools
 from dataclasses import dataclass
 
 from fileinfo import FileInformation
