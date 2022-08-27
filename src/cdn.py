@@ -196,40 +196,44 @@ def user_page(user):
 
 
 @app.post("/wizard")
-def create_user():
-    if request.remote_addr != "127.0.0.1":
-        return error_response("unauthorized", 401)
-    req = ["user", "quota", "file_size_limit"]
-    for x in req:
-        if x not in request.form:
-            return error_response(f"missing {x} in form data", 400)
-    id = uuid.uuid4()
-    name = request.form["user"]
-    try:
-        quota_bytes = int(request.form["quota"])
-        file_size_limit_bytes = int(request.form["file_size_limit"])
-    except ValueError:
-        return error_response("cannot parse int", 400)
-    token = secrets.token_hex(nbytes=128)
-    db_conn = get_database()
-    db_conn.create_user(name, str(id), token, quota_bytes, file_size_limit_bytes)
-    return {
-               "user": {
-                   "id": id,
-                   "name": name,
-                   "quota": quota_bytes,
-                   "file_size_limit_bytes": file_size_limit_bytes
-               },
-               "token": token,
-           }, 201
+@auto_auth()
+def create_user(user):
+    if (user is not None and user.admin) or request.remote_addr == "127.0.0.1":
 
+        req = ["user", "quota", "file_size_limit"]
+        for x in req:
+            if x not in request.form:
+                return error_response(f"missing {x} in form data", 400)
+        id = uuid.uuid4()
+        name = request.form["user"]
+        try:
+            quota_bytes = int(request.form["quota"])
+            file_size_limit_bytes = int(request.form["file_size_limit"])
+        except ValueError:
+            return error_response("cannot parse int", 400)
+        token = secrets.token_hex(nbytes=128)
+        db_conn = get_database()
+        db_conn.create_user(name, str(id), token, quota_bytes, file_size_limit_bytes)
+        return {
+                   "user": {
+                       "id": id,
+                       "name": name,
+                       "quota": quota_bytes,
+                       "file_size_limit_bytes": file_size_limit_bytes
+                   },
+                   "token": token,
+               }, 201
+    else:
+        return error_response("unauthorized", 401)
 
 # noinspection PyUnresolvedReferences
 @app.get("/wizard")
-def user_creation_wizard():
-    if request.remote_addr != "127.0.0.1":
-        return error_response("unauthorized", 401)
-    return render_template("user_wizard.html")
+@auto_auth()
+def user_creation_wizard(user):
+    if (user is not None and user.admin) or request.remote_addr == "127.0.0.1":
+        return render_template("user_wizard.html")
+    return error_response("unauthorized", 401)
+
 
 #
 # END OF ENDPOINTS
