@@ -1,11 +1,28 @@
-from flask import Flask, request, send_file
-
-from error import error_response
-import fileinfo
+import hashlib
 import os
+import uuid
 from datetime import datetime
 
+import magic
+from flask import Flask, request, send_file
+
+import db
+from error import error_response
+from fileinfo import FileInformation
+
+# Constants
+FILES_STORE_PATH = "files/"
+DB_NAME = "qcdn.db"
+
+# Create flask app
 app = Flask(__name__)
+
+# Initialize database
+db.init_db()
+
+
+def get_database() -> db.CDNDatabase:
+    return db.CDNDatabase(DB_NAME)
 
 
 @app.get("/upload")
@@ -29,12 +46,42 @@ def handle_file_upload():
     else:
         expires = None
 
-    uploaded_file = request.files["file"]
-    # save file to disk
-    # insert metadata into database
+    try:
+        uploaded_file = request.files["file"]
+    except KeyError:
+        return error_response(f"file not provided via 'file' parameter")
+    file_id = str(uuid.uuid4())
+    modify_token = str(uuid.uuid4())[:8]
+    file_content = uploaded_file.stream.read()
+
     # construct FileInformation object
+    file_info = FileInformation(
+        id=file_id,
+        mimetype=magic.from_buffer(file_content, mime=True),
+        name=os.path.basename(uploaded_file.filename),
+        size=len(file_content),
+        checksum=hashlib.sha256(file_content).hexdigest(),
+        upload_time=datetime.now(),
+        expire_time=expires,
+        modify_token=modify_token,
+        uploader=request.origin
+    )
+
+    # insert metadata into database
+    db_conn = get_database()
+    db_conn.save_file_info(file_info)
+
+    # save file to disk
+    os.makedirs(FILES_STORE_PATH, exist_ok=True)
+    with open(os.path.join(FILES_STORE_PATH, file_info.id), "wb") as fd:
+        fd.write(file_content)
+
     # return it
-    return "ok", 200
+    resp = {
+        "file_info": file_info.to_dict(),
+        "modify_token": file_info.modify_token,
+    }
+    return resp, 200
 
 
 @app.get("/file/<id>")
