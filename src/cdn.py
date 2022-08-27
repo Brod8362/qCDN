@@ -36,7 +36,8 @@ def auto_auth(force_auth=False):
         @functools.wraps(f)
         def inner(*args, **kwargs):
             db_conn = get_database()
-            user = db_conn.get_user_by_token(request.cookies.get("token", ""))
+            token = request.headers.get("Authorization", request.cookies.get("token", ""))
+            user = db_conn.get_user_by_token(token)
             if force_auth and user is None:
                 return error_response("auth required", code=401)
             return f(user, *args, **kwargs)
