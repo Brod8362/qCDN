@@ -7,6 +7,7 @@ from datetime import datetime
 
 DEFAULT_PATH = "qcdn.db"
 
+
 class CDNDatabase:
     conn: sqlite3.Connection = None
 

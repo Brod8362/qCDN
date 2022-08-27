@@ -13,8 +13,7 @@ from fileinfo import FileInformation
 # Constants
 FILES_STORE_PATH = os.path.abspath("./files/")
 DB_NAME = "qcdn.db"
-MAX_FILE_SIZE = 100 * 1024 * 1024 # 100 MB
-
+MAX_FILE_SIZE = 100 * 1024 * 1024  # 100 MB
 
 # Create flask app
 app = Flask(__name__, template_folder="static")
@@ -28,6 +27,7 @@ def get_database() -> db.CDNDatabase:
     return db.CDNDatabase(DB_NAME)
 
 
+# noinspection PyUnresolvedReferences
 @app.get("/upload")
 def get_upload_page():
     return render_template("upload_page.html", max_file_size=MAX_FILE_SIZE), 200
