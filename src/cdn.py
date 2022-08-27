@@ -1,6 +1,9 @@
 from flask import Flask, request, send_file
 
 from error import error_response
+import fileinfo
+import os
+from datetime import datetime
 
 app = Flask(__name__)
 
@@ -17,6 +20,20 @@ def handle_file_upload():
     if (file_count := len(request.files)) != 1:
         return error_response(f"received {file_count} files, expected 1")
 
+    # TODO: try and parse expiry time
+    if "expire_time" in request.form:
+        try:
+            expires = datetime.fromisoformat(request.form["expire_time"])
+        except ValueError:
+            return error_response(f"invalid iso date string for expire_time")
+    else:
+        expires = None
+
+    uploaded_file = request.files["file"]
+    # save file to disk
+    # insert metadata into database
+    # construct FileInformation object
+    # return it
     return "ok", 200
 
 
