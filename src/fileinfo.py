@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional
-
+import util
 
 @dataclass
 class FileInformation:
@@ -20,6 +20,9 @@ class FileInformation:
 
     def download_url(self, base: str = ""):
         return f"{base}/file/{self.id}/download"
+
+    def size_nice(self) -> str:
+        return util.format_file_size(self.size)
 
     def to_dict(self, base_url: str = ""):
         return {

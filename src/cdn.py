@@ -9,6 +9,7 @@ from flask import Flask, request, send_file, render_template
 import db
 from error import error_response
 from fileinfo import FileInformation
+from util import format_file_size
 
 # Constants
 FILES_STORE_PATH = os.path.abspath("./files/")
@@ -66,7 +67,7 @@ def handle_file_upload():
         upload_time=datetime.now(),
         expire_time=expires,
         modify_token=modify_token,
-        uploader=request.origin
+        uploader=request.remote_addr
     )
 
     # insert metadata into database
@@ -136,7 +137,9 @@ def retrieve_stats():
     files = db_conn.get_all_file_info()
     stats = {
         "total_files": len(files),
-        "total_size": sum(f.size for f in files),
-        "largest_file": max(f.size for f in files)
+        "total_size": format_file_size(sum(f.size for f in files)),
+        "largest_file": format_file_size(max(f.size for f in files)),
+        "maximum_allowed": format_file_size(MAX_FILE_SIZE)
     }
+    files.sort(key=lambda x: x.size, reverse=True)
     return render_template("stats_page.html", stats=stats, files=files), 200
