@@ -14,6 +14,7 @@ class FileInformation:
     expire_time: Optional[datetime]
     modify_token: str
     uploader: Optional[str]
+    owner_id: Optional[str]
 
     def is_expired(self):
         return self.expire_time is not None and self.expire_time < datetime.now()

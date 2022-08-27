@@ -20,7 +20,7 @@ class CDNDatabase:
 
     def save_file_info(self, info: FileInformation):
         cur = self.conn.cursor()
-        cur.execute("INSERT INTO file_info VALUES(?,?,?,?,?,?,?,?,?,?)",
+        cur.execute("INSERT INTO file_info VALUES(?,?,?,?,?,?,?,?,?,?,?)",
                     (info.id,
                      info.mimetype,
                      info.name,
@@ -30,6 +30,7 @@ class CDNDatabase:
                      info.expire_time,
                      info.modify_token,
                      info.uploader,
+                     info.owner_id,
                      False)
                     )
         self.conn.commit()
@@ -39,7 +40,7 @@ class CDNDatabase:
         cur = self.conn.cursor()
         rs = [row for row in cur.execute(
             """SELECT id, mimetype, name, size, checksum, 
-                upload_time, expire_time, modify_token, uploader
+                upload_time, expire_time, modify_token, uploader, owner_id
                 FROM file_info WHERE id=? AND deleted=FALSE""",
             (file_id,)
         )]
@@ -52,21 +53,21 @@ class CDNDatabase:
         cur = self.conn.cursor()
         rs_iter = cur.execute(
             """SELECT id, mimetype, name, size, checksum, 
-                upload_time, expire_time, modify_token, uploader
+                upload_time, expire_time, modify_token, uploader, owner_id
                 FROM file_info WHERE deleted=FALSE""")
         return [row_to_obj(row) for row in rs_iter]
 
     def get_user_by_token(self, token: str) -> Optional[User]:
         cur = self.conn.cursor()
-        for row in cur.execute("SELECT name, file_size_limit, quota, admin FROM users WHERE token=?", (token,)):
-            return User(row[0], row[1], row[2], row[3])
+        for row in cur.execute("SELECT id, name, file_size_limit, quota, admin FROM users WHERE token=?", (token,)):
+            return User(row[0], row[1], row[2], row[3], row[4])
         return None
 
     def get_user_uploads(self, user_name: str) -> List[FileInformation]:
         cur = self.conn.cursor()
         rs_iter = cur.execute(
             """SELECT id, mimetype, name, size, checksum, 
-                upload_time, expire_time, modify_token, uploader
+                upload_time, expire_time, modify_token, uploader, owner_id
                 FROM file_info WHERE uploader=? AND deleted=FALSE""", (user_name,))
         return [row_to_obj(row) for row in rs_iter]
 
@@ -76,7 +77,7 @@ class CDNDatabase:
         self.conn.commit()
         cur.close()
 
-    def create_user(self, name: str, id:str,  token: str, quota: int, limit: int):
+    def create_user(self, name: str, id: str, token: str, quota: int, limit: int):
         cur = self.conn.cursor()
         cur.execute("INSERT INTO users VALUES(?,?,?,?,?,FALSE)", (id, name, token, limit, quota))
         self.conn.commit()
@@ -93,7 +94,8 @@ def row_to_obj(row: tuple) -> FileInformation:
         upload_time=datetime.fromisoformat(row[5]),
         expire_time=datetime.fromisoformat(et) if (et := row[6]) is not None else None,
         modify_token=row[7],
-        uploader=row[8]
+        uploader=row[8],
+        owner_id=row[9]
     )
 
 
@@ -111,6 +113,7 @@ def init_db(path: str = DEFAULT_PATH):
                     expire_time TIMESTAMP,
                     modify_token TEXT,
                     uploader TEXT,
+                    owner_id TEXT,
                     deleted BOOLEAN
                 )""")
     cur.execute("""CREATE TABLE IF NOT EXISTS users(

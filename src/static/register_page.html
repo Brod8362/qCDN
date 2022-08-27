@@ -5,6 +5,15 @@
             border: 1px solid black;
         }
     </style>
+    <script>
+        function delete_file(fid) {
+            fetch(`/file/${fid}`, {
+                method: "DELETE"
+            })
+                .then(x => alert("deleted"))
+                .then(x => location.reload());
+        }
+    </script>
 </head>
 <body>
     <script>

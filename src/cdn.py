@@ -100,7 +100,8 @@ def handle_file_upload(user: User):
         upload_time=datetime.now(),
         expire_time=expires,
         modify_token=modify_token,
-        uploader=user.name if user is not None else request.remote_addr
+        uploader=user.name,
+        owner_id=user.id
     )
 
     # insert metadata into database
@@ -138,7 +139,7 @@ def delete_file(user, id: str):
     if file_info is None:
         return error_response("file not found"), 404
 
-    if user.admin or file_info.uploader == user.name:
+    if user.admin or file_info.owner_id == user.id:
         file_path = os.path.join(FILES_STORE_PATH, file_info.id)
         db_conn.mark_deleted(file_info.id)
         os.remove(file_path)

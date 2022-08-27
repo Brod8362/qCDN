@@ -7,6 +7,7 @@ from util import format_file_size
 
 @dataclass
 class User:
+    id: str
     name: str
     size_limit: int
     quota: int
