@@ -143,3 +143,13 @@ def retrieve_stats():
     }
     files.sort(key=lambda x: x.size, reverse=True)
     return render_template("stats_page.html", stats=stats, files=files), 200
+
+
+# noinspection PyUnresolvedReferences
+@app.get("/user")
+def user_page():
+    token = request.cookies.get("token", "")
+    db_conn = get_database()
+    user = db_conn.get_user_by_token(token)
+    return render_template("register_page.html", user=user)
+

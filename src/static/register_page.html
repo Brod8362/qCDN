@@ -1,0 +1,28 @@
+<head>
+    <title>qCDN: Register</title>
+</head>
+<body>
+    <script>
+        function logout() {
+            document.cookie = "token=-; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/";
+            location.reload();
+        }
+
+        function login() {
+            const token = document.getElementById("token_input").value;
+            document.cookie = `token=${token}; expires=Tue, 19 Jan 2038 00:00:00 GMT; path=/;`;
+            location.reload()
+        }
+    </script>
+    {% if user %}
+        <h3>Hi, {{ user.name }}</h3>
+        <ul>
+            <li><b>Quota:</b> {{user.quota_used_nice()}} / {{user.quota_nice()}}</li>
+            <li><b>Uploads:</b> {{user.upload_count()}}</li>
+        </ul>
+        <button onclick="logout()">Logout</button>
+    {% else %}
+        <label for="token_input">Token </label><input id="token_input" placeholder="put token here...">
+        <button type="button" onclick="login()">Login</button>
+    {% endif %}
+</body>

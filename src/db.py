@@ -3,6 +3,7 @@ import sqlite3
 from typing import Optional, List
 
 from fileinfo import FileInformation
+from user import User
 from datetime import datetime
 
 DEFAULT_PATH = "qcdn.db"
@@ -54,6 +55,12 @@ class CDNDatabase:
                 FROM file_info""")
         return [row_to_obj(row) for row in rs_iter]
 
+    def get_user_by_token(self, token: str) -> Optional[User]:
+        cur = self.conn.cursor()
+        for row in cur.execute("SELECT name, file_size_limit, quota FROM users WHERE token=?", (token,)):
+            return User(row[0], row[1], row[2])
+        return None
+
 
 def row_to_obj(row: tuple) -> FileInformation:
     return FileInformation(
@@ -84,5 +91,12 @@ def init_db(path: str = DEFAULT_PATH):
                     modify_token TEXT,
                     uploader TEXT
                 )""")
+    cur.execute("""CREATE TABLE IF NOT EXISTS users(
+        token TEXT NOT NULL PRIMARY KEY,
+        name TEXT,
+        file_size_limit INTEGER,
+        quota INTEGER
+    )
+    """)
     conn.commit()
     cur.close()
