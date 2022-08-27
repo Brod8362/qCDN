@@ -4,7 +4,7 @@ info:
   description: Miniature file upload service/CDN
   contact:
     name: Brod8362
-    url: http://www.github.com/Brod8362
+    url: https://www.github.com/Brod8362
   version: 0.1.0
 
 servers:
@@ -77,7 +77,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/FileInformation"
+                type: object
+                properties:
+                  file_info:
+                    $ref: "#/components/schemas/FileInformation"
+                  modify_token:
+                    type: string
+                    description: Token used to later delete file if desired.
         400:
           description: Invalid or non-permitted argument(s) (see response body for details)
           content:
