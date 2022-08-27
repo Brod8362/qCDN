@@ -71,6 +71,8 @@ def handle_file_upload(user: User):
     else:
         expires = None
 
+    db_conn = get_database()
+
     try:
         uploaded_file = request.files["file"]
     except KeyError:
@@ -79,7 +81,7 @@ def handle_file_upload(user: User):
     modify_token = str(uuid.uuid4())[:8]
     file_content = uploaded_file.stream.read()
 
-    if user.quota != -1 and user.quota_used()+len(file_content) > user.quota:
+    if user.quota != -1 and user.quota_used(db_conn)+len(file_content) > user.quota:
         return error_response("quota exceeded", 403)
 
     if user.size_limit != -1 and len(file_content) > user.size_limit:
@@ -99,7 +101,6 @@ def handle_file_upload(user: User):
     )
 
     # insert metadata into database
-    db_conn = get_database()
     db_conn.save_file_info(file_info)
 
     # save file to disk
@@ -162,7 +163,7 @@ def download_file(id: str):
 @app.get("/stats")
 @auto_auth(force_auth=True)
 def retrieve_stats(user):
-    if user.quota != -1 or user.size_limit != -1:
+    if not user.admin:
         return error_response("unauthorized"), 403
     db_conn = get_database()
     files = db_conn.get_all_file_info()
@@ -182,11 +183,14 @@ def retrieve_stats(user):
 def user_page(user):
     db_conn = get_database()
     info = {}
+    files = []
     if user:
+        files = user.upload_info(db_conn)
         info["quota_used"] = user.quota_used_nice(db_conn)
-        info["quota"] = user.quota_used(db_conn) if user.quota != -1 else "unlimited"
+        info["quota"] = user.quota_nice() if user.quota != -1 else "unlimited"
         info["upload_count"] = user.upload_count(db_conn)
-    return render_template("register_page.html", user=user, info=info)
+        info["size_limit"] = format_file_size(user.size_limit) if user.size_limit != -1 else "n/a"
+    return render_template("register_page.html", user=user, info=info, files=files)
 
 #
 # END OF ENDPOINTS

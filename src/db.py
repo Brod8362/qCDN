@@ -57,8 +57,8 @@ class CDNDatabase:
 
     def get_user_by_token(self, token: str) -> Optional[User]:
         cur = self.conn.cursor()
-        for row in cur.execute("SELECT name, file_size_limit, quota FROM users WHERE token=?", (token,)):
-            return User(row[0], row[1], row[2])
+        for row in cur.execute("SELECT name, file_size_limit, quota, admin FROM users WHERE token=?", (token,)):
+            return User(row[0], row[1], row[2], row[3])
         return None
 
     def get_user_uploads(self, user_name: str) -> List[FileInformation]:
@@ -103,7 +103,8 @@ def init_db(path: str = DEFAULT_PATH):
         token TEXT NOT NULL PRIMARY KEY,
         name TEXT,
         file_size_limit INTEGER,
-        quota INTEGER
+        quota INTEGER,
+        admin BOOLEAN
     )
     """)
     conn.commit()

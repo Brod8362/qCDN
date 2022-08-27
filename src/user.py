@@ -10,6 +10,7 @@ class User:
     name: str
     size_limit: int
     quota: int
+    admin: bool
 
     def quota_nice(self) -> str:
         return format_file_size(self.quota)

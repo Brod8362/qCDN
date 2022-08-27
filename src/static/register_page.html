@@ -18,11 +18,12 @@
         <h3>Hi, {{ user.name }}</h3>
         <ul>
             <li><b>Quota:</b> {{info["quota_used"]}} / {{info["quota"]}}</li>
+            <li><b>Single-file size limit:</b> {{info["size_limit"]}}</li>
             <li><b>Uploads:</b> {{info["upload_count"]}}</li>
         </ul>
         <button onclick="logout()">Logout</button>
-    {% else %}
-        <label for="token_input">Token </label><input id="token_input" placeholder="put token here...">
-        <button type="button" onclick="login()">Login</button>
     {% endif %}
+    <hr>
+    <label for="token_input">Token </label><input id="token_input" placeholder="put token here..." type="password">
+    <button type="button" onclick="login()">Login</button>
 </body>
